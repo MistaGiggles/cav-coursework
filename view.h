@@ -79,6 +79,32 @@ public:
 	float operator [](int i) {
 		return weightings[i];
 	}
+
+	void check()
+	{
+		std::cout<<"\t start"<<std::endl;
+		float total = 0;
+		for(int i = 0; i < weightings.size(); i++)
+		{
+			if(weightings[i] < 0)
+			{
+				std::cout<<"\tWeighting "<<i<<" is less than 0"<<std::endl;
+
+			}else if(weightings[i] > 1)
+			{
+				std::cout<<"\tWeighting "<<i<<" is greater than 1"<<std::endl;
+
+			} else {
+				std::cout<<"\tWeighting "<<i<<" is "<<weightings[i]<<std::endl;
+			}
+			total += weightings[i];
+			
+		}
+		if(total > 1)
+		{
+			std::cout<<"\tTotal weight is greater than 1"<<std::endl;
+		}
+	}
 };
 
 class Bone {
@@ -91,7 +117,8 @@ public:
 	Matrix4f LocalTranslation;
 	Matrix4f NewLocalTranslation;
 
-
+	Matrix4f MRest;
+	Matrix4f MRestInv;
 	
 
 	Bone* Parent;
@@ -147,6 +174,7 @@ public:
 		NewLocalTranslation.setIdentity();
 		//NewLocalTranslation.setTranslation(Vector3f(0.1f,0.1f,0.1f));
 
+
 		if(!isRoot)
 		{
 			LocalTranslation.setTranslation(Coords - Parent->Coords);
@@ -155,11 +183,19 @@ public:
 			LocalTranslation.setTranslation(Coords);
 		}
 
-
+		NewLocalTranslation = LocalTranslation;
 		//GlobalPosition.print();
 		//std::cout<<"^GLOB   |   v LOCAL"<<std::endl;
 		//LocalTranslation.print();
 		
+	}
+
+	void InitMRest()
+	{
+		MRest.setIdentity();
+		restChain(MRest);
+		MRest.inv(MRest, MRestInv);
+
 	}
 
 	void Chain(Matrix4f& m)
@@ -173,6 +209,29 @@ public:
 		}
 		return;
 	};
+
+	Matrix4f startChain()
+	{
+		Matrix4f m;
+		m.setIdentity();
+		Chain(m);
+		return m;
+	}
+
+	Matrix4f& getRestPose()
+	{
+		return MRest;
+	};
+
+	Matrix4f& getRestPoseInv()
+	{
+		return MRestInv;
+	};
+
+	Matrix4f getNewPose()
+	{
+		return NewLocalTranslation;
+	}
 
 	void restChain(Matrix4f& m)
 	{
@@ -193,7 +252,7 @@ public:
 class Skeleton {
 
 	std::vector<Bone*> bones;
-	std::vector<Weight> weights;
+	
 	float curRot;
 	int parentBone;
 public:
@@ -202,44 +261,48 @@ public:
 		curRot = 0;
 	}
 
+	std::vector<Weight> weights;
+
+	void checkWeights()
+	{
+		for(int i = 0; i < weights.size(); i++)
+		{
+			std::cout<<"Testing weight for vetice: "<<i<<std::endl;
+			weights[i].check();
+		}
+	}
+
+	void update()
+	{
+		bones[6]->setRotation(0,0,curRot);
+		curRot += 0.1f;
+	}
+
 	void draw()
 	{
-			curRot += 0.00001f;
+			
 			//bones[parentBone]->setRotation(0,0,curRot);
-			bones[20]->setRotation(0,0,curRot);
+			//bones[20]->setRotation(0,0,curRot);
 			for(int i = 0; i < bones.size(); i++)
 			{
 				if(i != parentBone)
 				{
 					glBegin(GL_LINES);
 						glColor3f(1.0,1.0,1.0);
-						Matrix4f p1;
-						Matrix4f p2;
-						Matrix4f rp1Inv;
-						Matrix4f rp2Inv;
-
 						
-						p1.setIdentity();
-						//p1.setTranslation(Vector3f(0,0,0));
-						p2.setIdentity();
-						//p2.setTranslation(Vector3f(0,0,0));
-						//p1.print();
-
-						bones[i]->restChain(p1);
-						bones[i]->Parent->restChain(p2);
-						p1.inv(p1, rp1Inv);
-						p2.inv(p2, rp2Inv);
-
-						p1.setIdentity();
-						p2.setIdentity();
-
-						bones[i]->Chain(p1);
-						bones[i]->Parent->Chain(p2);
-
+						
+						// Place first point at bones origin, use the rest pose to calculate global rest position
 						Vector3f a(0,0,0);
+						a = bones[i]->getRestPose() * a;
+						// Place first point at bones parents origin, use the rest pose to calculate global rest position
 						Vector3f b(0,0,0);
-						a = p1 * rp1Inv * a;
-						b = p2 * rp2Inv * b;
+						b = bones[i]->Parent->getRestPose() * b;
+						
+						// Apply transformation, startChain() returns new post matrix
+						a = (bones[i]->startChain() *  bones[i]->getRestPoseInv()) * a;
+						b = (bones[i]->Parent->startChain() * bones[i]->Parent->getRestPoseInv()) * b;
+
+						// draw
 						glVertex3f(a[0], a[1], a[2]);
 						glVertex3f(b[0], b[1], b[2]);
 						//glVertex3f(p1(0,3), p1(1,3), p1(2,3));
@@ -260,15 +323,16 @@ public:
 		
 	}
 
-	void Rig(Vector3f& v, int vi)
+	void Rig(Vector3f& v, Vector3f& original, int vi)
 	{
-		Weight w = weights[vi];
+		
 		
 		Vector3f pos;
-		
+		float totalWeight = 0;
 		for(int i = 0; i < bones.size(); i++)
 		{
-			if(w[i] >0)
+			totalWeight += weights[vi][i];
+			if(weights[vi][i] > 0)
 			{
 				//std::vector<int> path = getPath(w.getlast());
 				//for(int j = 0; j < path.size();p j++)
@@ -276,6 +340,19 @@ public:
 				//	int bone
 				//}
 				//pos +=  bones[i].Transformation(v) * w[i];
+
+				//(bones[i]->startChain() *  bones[i]->getRestPoseInv()).print();
+				//original.print();
+				Vector3f result = (bones[i]->startChain() *  bones[i]->getRestPoseInv()) * original;
+				//std::cout<<"Weight: "<<weights[vi][i]<<std::endl;
+				v[0] += weights[vi][i] * result[0];
+				v[1] += weights[vi][i] * result[1];
+				v[2] += weights[vi][i] * result[2];
+
+			}
+			if(totalWeight>1)
+			{
+				//std::cout<<"ERROR: Weight too high "<<totalWeight<<std::endl;
 			}
 		}
 		
@@ -342,38 +419,48 @@ public:
 			}
 			
 		}
+
 		int numWeights = bones.size();
 		ifstream weight_file(weights_file);
 		if(weight_file==NULL) cerr << "failed reading weights data from " << weights_file;
 		char buf2[1024];
+		float wi = 0;
+
+		int linesread = 0;
 		while(!weight_file.eof()) {
-			weight_file.getline(buf2, sizeof(buf));
+			weight_file.getline(buf2, sizeof(buf2));
+			char* data = buf2;
+			linesread += 1;
+			int offset = 0;
 			Weight w(numWeights);
 			for(int i = 0; i < numWeights; i++) {
-				float wi;
-				sscanf(buf, "%f", &wi);
-				w.addWeight(wi, i);
+				wi = 0;
+				int r = sscanf(data, "%f%n", &wi, &offset);
+				data += offset;
+				if(r == 1){
+					//std::cout<<" Adding weight: " << wi << std::endl;
+					w.addWeight(wi, i);
+				} else
+				{
+					std::cout<<"INPUT READ ERROR LINE: "<<linesread<<" POS: "<<i<<std::endl;
+				}
+				
 			}
 			weights.push_back(w);
 		}
-		/*
-		for(int ji = 0; ji < joints.size(); ji++)
-		{
-			if(joints[ji].connected == -1) {
-				// parent joint
-			} else {
-				Bone b(joints[joints[ji].connected], joints[ji]);
-				bones.push_back(b);
-			}
-		}*/
+		
 
 		for(int p = 0; p < bones.size(); p++)
 		{
 			bones[p]->InitGlobal();
+		}
 
+		for(int q = 0; q < bones.size(); q++)
+		{
+			bones[q]->InitMRest();
 		}
 		std::cout<<"Initialised bone matrices"<<std::endl;
-
+		//checkWeights();
 
 	};
 

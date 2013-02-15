@@ -468,14 +468,14 @@ void recalcModelView(void)
 void myDisplay()
 {
 
-
+	S.update();
 	if (newModel)
 		recalcModelView();
 
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear OpenGL Window
 	int trignum = trig.trigNum();
-	Vector3f v1,v2,v3,n1,n2,n3;
+	Vector3f n1,n2,n3,vo1,vo2,vo3;
 
 
 	for (int i = 0 ; i < trignum; i++)  
@@ -483,24 +483,31 @@ void myDisplay()
 		/*** do the rasterization of the triangles here using glRecti ***/
 //		glColor3f(1,0,0);/* you can set the color by doing the computation of illumination*/
 //		glRecti(0,0,1,1);/* filling in the pixel */
+		Vector3f v1(0,0,0);
+		Vector3f v2(0,0,0);
+		Vector3f v3(0,0,0);
 
 		float m1,m2,m3,min,max;
 		int i1, i2, i3;
-		trig.getTriangleVertices(i,v1,v2,v3);
+		trig.getTriangleVertices(i,vo1,vo2,vo3);
 		trig.getTriangleIndices(i, i1, i2, i3);
 		trig.getTriangleNormals(i,n1,n2,n3);
 		trig.getMorseValue(i, m1, m2, m3);
+
+		//S.weights[]
 
 		m1 = m2 = m3 = trig.color(i);
 
 		GLfloat skinColor[] = {0.1, 1., 0.1, 1.0};
 		
 		if (max >= 0 && drawSkin) {
+			//std::cout<<"Original:\t"<<vo1[0]<<", "<<vo1[1]<<", "<<vo1[2]<<std::endl;
+			S.Rig(v1, vo1, i1);
+			S.Rig(v2, vo2, i2);
+			S.Rig(v3, vo3, i3);
 
-			S.Rig(v1, i1);
-			S.Rig(v2, i2);
-			S.Rig(v3, i3);
 
+			//std::cout<<"Transformed:\t"<<v1[0]<<", "<<v1[1]<<", "<<v1[2]<<std::endl;
 			glBegin(GL_TRIANGLES);
 
 				skinColor[1] = m1; skinColor[0] = 1-m1;
@@ -631,12 +638,12 @@ int main(int argc, char **argv)
 	glutInitWindowSize(nRows, nCols);
 	glutCreateWindow("SimpleExample");
 
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, light_diffuse);
-	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	//glEnable(GL_LIGHT0);
-	//glEnable(GL_LIGHTING);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
 
 
 	/* Use depth buffering for hidden surface elimination. */

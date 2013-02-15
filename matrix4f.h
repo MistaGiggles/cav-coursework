@@ -24,6 +24,10 @@ class Vector3f {
 
 	Vector3f() { _item[0]=_item[1]=_item[2]=0.f;};
 
+	void print()
+	{
+		std::cout<<"[\t"<<_item[0]<<"\t|\t"<<_item[1]<<"\t|\t"<<_item[2]<<"\t]"<<std::endl;
+	}
 
 	Vector3f & operator = (const Vector3f & obj) 
 	{
