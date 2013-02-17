@@ -1,0 +1,9 @@
+Structure of file:
+TIME BONE:rx:ry:rz BONE:rx:ry:rz etc.
+
+Where TIME is the current time, and the bones rotations *should* have reached the specified values
+
+BONE is the boneid
+
+Options to run the keyframes as play+reverse,
+
