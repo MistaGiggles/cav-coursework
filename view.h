@@ -61,32 +61,7 @@ public:
 
 };
 
-class Frame {
-	std::vector<Matrix4f> positions;
-	float starttime;
-	float endtime;
 
-	void init(int numBones, float _start, float _end)
-	{
-		while(positions.size() < numBones)
-		{
-			Matrix4f a;
-			a.setIdentity();
-			positions.push_back(a);
-		}
-		starttime = _start;
-		endtime = _end;
-	};
-
-	void addPos(int _id, Matrix4f& pos) {
-		positions[_id].operator=(pos);
-	};
-
-	void apply(float time, Bone* bone)
-	{
-
-	};
-};
 
 class Weight {
 	std::vector<float> weightings;
@@ -333,6 +308,41 @@ public:
 	
 };
 
+
+class Frame {
+	std::vector<Matrix4f> StartPositions;
+	std::vector<Matrix4f> EndPositions;
+	float starttime;
+	float endtime;
+
+	void init(int numBones, float _start, float _end)
+	{
+		while(StartPositions.size() < numBones)
+		{
+			Matrix4f a;
+			Matrix4f b;
+			b.setIdentity();
+			a.setIdentity();
+			StartPositions.push_back(a);
+			EndPositions.push_back(b);
+		}
+		starttime = _start;
+		endtime = _end;
+	};
+
+	void addPos(int _id, Matrix4f& spos, Matrix4f& epos) {
+		StartPositions[_id].operator=(spos);
+		EndPositions[_id].operator=(epos);
+	};
+
+	void apply(float time, Bone* bone)
+	{
+		//   Vr = Va + t .(Vb - Va )
+		float t = (time-starttime)/(endtime-starttime);
+		int id = bone->id;
+		//bone->Rotation.operator=(StartPositions[id] + t*(EndPositions[id] - StartPositions[id]));
+	};
+};
 
 class Skeleton {
 
