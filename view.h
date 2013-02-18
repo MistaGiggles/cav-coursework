@@ -30,6 +30,9 @@ class Bone;
 class Joint;
 class Weight;
 
+class Frame;
+
+
 class Joint {
 	int id;
 	float x, y, z;
@@ -56,6 +59,33 @@ public:
 	}
 
 
+};
+
+class Frame {
+	std::vector<Matrix4f> positions;
+	float starttime;
+	float endtime;
+
+	void init(int numBones, float _start, float _end)
+	{
+		while(positions.size() < numBones)
+		{
+			Matrix4f a;
+			a.setIdentity();
+			positions.push_back(a);
+		}
+		starttime = _start;
+		endtime = _end;
+	};
+
+	void addPos(int _id, Matrix4f& pos) {
+		positions[_id].operator=(pos);
+	};
+
+	void apply(float time, Bone* bone)
+	{
+
+	};
 };
 
 class Weight {
@@ -119,7 +149,12 @@ public:
 
 	Matrix4f MRest;
 	Matrix4f MRestInv;
-	
+
+	Matrix4f lastChain;
+	bool hasChanged;	
+
+	Matrix4f lastRest;
+	bool hasChangedRest;
 
 	Bone* Parent;
 	bool isRoot;
@@ -134,6 +169,9 @@ public:
 		//LocalTranslation.setTranslation(Coords - Parent->Coords);
 		//Rotation.setIdentity();
 		isRoot = false;
+		hasChanged = true;
+		hasChangedRest = true;
+
 	};
 
 	Bone(float x, float y, float z)
@@ -144,6 +182,9 @@ public:
 		//LocalTranslation = GlobalPosition;
 		//Rotation.setIdentity();
 		isRoot = true;
+		hasChanged = true;
+		hasChangedRest = true;
+
 	}
 
 	void setID(int _id)
@@ -162,11 +203,13 @@ public:
 	
 	void setRotation(double rotx, double roty, double rotz)
 	{
+		update();
 		Rotation = rotX(rotx) * rotY(roty) * rotZ(rotz);
 	};
 
 	void InitGlobal()
 	{
+		lastChain.setIdentity();
 		Rotation.setIdentity();
 		GlobalPosition.setIdentity();
 		GlobalPosition.setTranslation(Coords);
@@ -190,6 +233,20 @@ public:
 		
 	}
 
+	void update()
+	{
+		hasChanged = true;
+		if(isRoot)
+		{
+			
+		} else 
+		{
+			Parent->update();
+		}
+		return;
+			
+	}
+
 	void InitMRest()
 	{
 		MRest.setIdentity();
@@ -200,22 +257,41 @@ public:
 
 	void Chain(Matrix4f& m)
 	{
-		if(isRoot)
+		if(hasChanged)
 		{
-			m = m * Rotation * NewLocalTranslation;
-		} else {
-			Parent->Chain(m);
-			m = m * Rotation * NewLocalTranslation;
+			if(isRoot)
+			{
+				m = m * Rotation * NewLocalTranslation;
+			} else {
+				Parent->Chain(m);
+				m = m * Rotation * NewLocalTranslation;
+			}
+			lastChain.operator=(m);
+			hasChanged = true;
+			return;
 		}
-		return;
+		else {
+			m.operator=(lastChain);
+		}
 	};
+
+
 
 	Matrix4f startChain()
 	{
-		Matrix4f m;
-		m.setIdentity();
-		Chain(m);
-		return m;
+		if(hasChanged){
+			Matrix4f m;
+			m.setIdentity();
+			Chain(m);
+			lastChain = m;
+			hasChanged = true;
+			return m;
+		}
+		else {
+			return lastChain;
+		}
+
+		
 	}
 
 	Matrix4f& getRestPose()
@@ -235,14 +311,23 @@ public:
 
 	void restChain(Matrix4f& m)
 	{
-		if(isRoot)
+		if(hasChangedRest)
 		{
-			m = m * LocalTranslation;
-		} else {
-			Parent->restChain(m);
-			m = m * LocalTranslation;
+			if(isRoot)
+			{
+				m = m * LocalTranslation;
+			} else {
+				Parent->restChain(m);
+				m = m * LocalTranslation;
+			}
+			lastRest.operator=(m);
+			hasChangedRest = false;
+			return;
+		} else
+		{
+			m.operator=(lastRest);
+			return;
 		}
-		return;
 	};
 
 	
@@ -303,6 +388,7 @@ public:
 						b = (bones[i]->Parent->startChain() * bones[i]->Parent->getRestPoseInv()) * b;
 
 						// draw
+						glNormal3f(0,0,1);
 						glVertex3f(a[0], a[1], a[2]);
 						glVertex3f(b[0], b[1], b[2]);
 						//glVertex3f(p1(0,3), p1(1,3), p1(2,3));
