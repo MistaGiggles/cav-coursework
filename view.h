@@ -359,9 +359,9 @@ class Frame {
 		
 		float t = (time-starttime)/(endtime-starttime);
 		int id = bone->id;
-		//std::cout<<"START"<<std::endl;
-		//StartPositions[i].print();
-		//EndPositions[i].print();
+		std::cout<<"START"<<std::endl;
+		StartPositions[i].print();
+		EndPositions[i].print();
 		Vector3f rots = (StartPositions[i] + (EndPositions[i] - StartPositions[i]) * t);
 		//bone->Rotation.setIdentity();
 		bone->setRotation(rots[0], rots[1], rots[2]);
@@ -421,20 +421,18 @@ public:
 			anim_file.getline(buf, sizeof(buf));
 			id = -99;
 			// Scans for StartTime EndTime Bone XRotation YRotation ZRotation EndXRot EndYRot EndZRot
-			sscanf(buf, "%f %f %i  %f %f %f", &start, &end, &id, &nxr, &nyr, &nzr);
+			sscanf(buf, "%f %f %i %f %f %f %f %f %f", &start, &end, &id, &xr, &yr, &zr, &nxr, &nyr, &nzr);
 			if(lastStart == start) {
 				// Same Frame
-				frames.back().add(id, lx, ly, lz, nxr, nyr, nzr);
+				frames.back().add(id, xr, yr, zr, nxr, nyr, nzr);
 			} else {
 				Frame f;
 				f.setStartEnd(start, end);
-				f.add(id, lx, ly, lz, nxr, nyr, nzr);
+				f.add(id, xr, yr, zr, nxr, nyr, nzr);
 				frames.push_back(f);
 				//new Frame
 			}
-			lx = nxr;
-			ly = nyr;
-			lz = nzr;
+			
 
 
 			lastStart = start;

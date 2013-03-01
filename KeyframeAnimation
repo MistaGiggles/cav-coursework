@@ -1,5 +1,5 @@
 Structure of file:
-TIME BONE:rx:ry:rz BONE:rx:ry:rz etc.
+StartTime EndTime Bone RotX Roty RotZ
 
 Where TIME is the current time, and the bones rotations *should* have reached the specified values
 
