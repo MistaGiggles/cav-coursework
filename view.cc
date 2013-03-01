@@ -554,11 +554,41 @@ void processSpecialKeys(int key, int x, int y) {
 	int mod = glutGetModifiers();
 	switch(mod) {
 		case GLUT_ACTIVE_CTRL :
-			
+			switch(key) {
+			case GLUT_KEY_UP :
+					
+					S.control(1,0,0.1f);
+					break;
+			case GLUT_KEY_DOWN :
+					S.control(1,0,-0.1f);
+					break;
+			case GLUT_KEY_RIGHT :
+					S.control(1,1,0.1f);
+					break;
+		
+			case GLUT_KEY_LEFT :
+					S.control(1,1,-0.1f);
+					break;
+				}
 			break;
 
 		case GLUT_ACTIVE_ALT:
-			
+			switch(key) {
+			case GLUT_KEY_UP :
+					
+					S.control(18,0,0.1f);
+					break;
+			case GLUT_KEY_DOWN :
+					S.control(18,0,-0.1f);
+					break;
+			case GLUT_KEY_RIGHT :
+					S.control(18,1,0.1f);
+					break;
+		
+			case GLUT_KEY_LEFT :
+					S.control(18,1,-0.1f);
+					break;
+				}
 
 			break;
 			
@@ -567,17 +597,17 @@ void processSpecialKeys(int key, int x, int y) {
 			switch(key) {
 			case GLUT_KEY_UP :
 					
-					//S.move(21, 0,0.01,0);
+					S.control(5,0,0.1f);
 					break;
 			case GLUT_KEY_DOWN :
-					//S.move(21, 0,-0.01,0);
+					S.control(5,0,-0.1f);
 					break;
 			case GLUT_KEY_RIGHT :
-					//S.move(21, -0.01,0,0);
+					S.control(5,1,0.1f);
 					break;
 		
 			case GLUT_KEY_LEFT :
-					//S.move(21, 0.01,0,0);
+					S.control(5,1,-0.1f);
 					break;
 				
 			
@@ -605,11 +635,15 @@ void processSpecialKeys(int key, int x, int y) {
 			break;
 	}
 }
+int lastTime = 0;
 
 void idle()
 {
-	
+	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
+	S.animate(((float)timeSinceStart - (float)lastTime)/1000.0f);
+	//std::cout<<"dtime: "<<timeSinceStart-lastTime<<std::endl;
 	glutPostRedisplay();
+	lastTime = glutGet(GLUT_ELAPSED_TIME);
 	
 
 }
@@ -624,6 +658,7 @@ int main(int argc, char **argv)
 		if(argc > 3) {
 			// LOAD SKELETON & WEIGHTS
 			S.load(argv[2], argv[3]);
+			S.loadAnimation("anim_turn");
 		}
 	} 
 	else {

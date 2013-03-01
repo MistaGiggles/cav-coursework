@@ -31,7 +31,7 @@ class Joint;
 class Weight;
 
 class Frame;
-
+class Animation;
 
 class Joint {
 	int id;
@@ -182,6 +182,12 @@ public:
 		Rotation = rotX(rotx) * rotY(roty) * rotZ(rotz);
 	};
 
+	void moveRotation(double rotx, double roty, double rotz)
+	{
+		update();
+		Rotation *= rotX(rotx) * rotY(roty) * rotZ(rotz);
+	};
+
 	void InitGlobal()
 	{
 		lastChain.setIdentity();
@@ -310,43 +316,140 @@ public:
 
 
 class Frame {
-	std::vector<Matrix4f> StartPositions;
-	std::vector<Matrix4f> EndPositions;
+	std::vector<Vector3f> StartPositions;
+	std::vector<Vector3f> EndPositions;
+	std::vector<int> bones;
 	float starttime;
 	float endtime;
-
+	public:
+	/*
 	void init(int numBones, float _start, float _end)
 	{
 		while(StartPositions.size() < numBones)
 		{
-			Matrix4f a;
-			Matrix4f b;
-			b.setIdentity();
-			a.setIdentity();
+			Vector3f a;
+			Vector3f b;
+			//b.setIdentity();
+			//a.setIdentity();
 			StartPositions.push_back(a);
 			EndPositions.push_back(b);
 		}
 		starttime = _start;
 		endtime = _end;
 	};
+	*/
+	void setStartEnd(float _start, float _end)
+	{
+		starttime = _start;
+		endtime = _end;
+	}
+	void add(int bone, float xr, float yr, float zr, float nxr, float nyr, float nzr)
+	{
+		Vector3f s(xr, yr, zr);
+		Vector3f e(nxr, nyr, nzr);
+		StartPositions.push_back(s);
+		EndPositions.push_back(e);
+		bones.push_back(bone);
+	}
+	
 
-	void addPos(int _id, Matrix4f& spos, Matrix4f& epos) {
-		StartPositions[_id].operator=(spos);
-		EndPositions[_id].operator=(epos);
-	};
-
-	void apply(float time, Bone* bone)
+	void apply(float time, Bone* bone, int i)
 	{
 		//   Vr = Va + t .(Vb - Va )
+		
 		float t = (time-starttime)/(endtime-starttime);
 		int id = bone->id;
-		//bone->Rotation.operator=(StartPositions[id] + t*(EndPositions[id] - StartPositions[id]));
+		//std::cout<<"START"<<std::endl;
+		//StartPositions[i].print();
+		//EndPositions[i].print();
+		Vector3f rots = (StartPositions[i] + (EndPositions[i] - StartPositions[i]) * t);
+		//bone->Rotation.setIdentity();
+		bone->setRotation(rots[0], rots[1], rots[2]);
+		//bone->Rotation.print();
+		//bone->update();
+
 	};
+
+	bool applyFrame(float time, std::vector<Bone*>& Ss)
+	{
+		if(time > endtime) {
+			return true;
+		}
+		for(int i = 0; i < bones.size(); i++)
+		{
+			int id = bones[i];
+			std::cout<<"ANIM APPLY UPDATE BONE "<<id<<std::endl;
+			apply(time, Ss[id], i);
+		}
+		return false;
+	};
+};
+
+class Animation {
+	std::vector<Frame> frames;
+	float time;
+	int currentFrame;
+public:
+	void update(float dt, std::vector<Bone*>& Ss)
+	{
+		std::cout<<"ANIM UPDATE FRAME "<<currentFrame<<std::endl;
+		time += dt;
+		std::cout<<"TIME: "<<time<<std::endl;
+		bool frameComplete = frames[currentFrame].applyFrame(time, Ss);
+		if(frameComplete) {
+			std::cout<<"Frame "<<currentFrame<<" completed"<<std::endl;
+			currentFrame++;
+			if(currentFrame > frames.size()) {
+				currentFrame = 0;
+				time = 0;
+			}
+		}
+	}
+
+	void loadAnimation(char* filename)
+	{
+		ifstream anim_file(filename);
+		if(anim_file==NULL) cerr << "failed reading animation data file " << filename;
+		char buf[1024];
+		// id, x, y, z, connected
+		int id;
+		float xr, yr, zr, nxr, nyr, nzr,  start, end;
+		float lx, ly, lz = 0;
+		float lastStart = -99;
+		id = 0;
+		while(!anim_file.eof()) {
+			anim_file.getline(buf, sizeof(buf));
+			id = -99;
+			// Scans for StartTime EndTime Bone XRotation YRotation ZRotation EndXRot EndYRot EndZRot
+			sscanf(buf, "%f %f %i  %f %f %f", &start, &end, &id, &nxr, &nyr, &nzr);
+			if(lastStart == start) {
+				// Same Frame
+				frames.back().add(id, lx, ly, lz, nxr, nyr, nzr);
+			} else {
+				Frame f;
+				f.setStartEnd(start, end);
+				f.add(id, lx, ly, lz, nxr, nyr, nzr);
+				frames.push_back(f);
+				//new Frame
+			}
+			lx = nxr;
+			ly = nyr;
+			lz = nzr;
+
+
+			lastStart = start;
+			
+		}
+		time = 0;
+		currentFrame = 0;
+
+	}
 };
 
 class Skeleton {
 
 	std::vector<Bone*> bones;
+	Animation anim;
 	
 	float curRot;
 	int parentBone;
@@ -369,8 +472,38 @@ public:
 
 	void update()
 	{
-		bones[6]->setRotation(0,0,curRot);
-		curRot += 0.1f;
+		//bones[10]->moveRotation(0,0,0.1f);
+		
+	}
+
+	Bone* getBone(int _id)
+	{
+		return bones[_id];
+	}
+
+	void control(int bone, int dir, float value)
+	{
+		float x, y, z = 0;
+		if(dir==0) {
+			x = value;
+		} else if (dir==1) {
+			y = value;
+		} else if (dir==2) {
+			z = value;
+		} else  {
+
+		}
+		bones[bone]->moveRotation(x,y,z);
+	}
+
+	void animate(float dt)
+	{
+		anim.update(dt, bones);
+	}
+
+	void loadAnimation(char* filename)
+	{
+		anim.loadAnimation(filename);
 	}
 
 	void draw()
