@@ -360,8 +360,8 @@ class Frame {
 		float t = (time-starttime)/(endtime-starttime);
 		int id = bone->id;
 		std::cout<<"START"<<std::endl;
-		StartPositions[i].print();
-		EndPositions[i].print();
+		//StartPositions[i].print();
+		//EndPositions[i].print();
 		Vector3f rots = (StartPositions[i] + (EndPositions[i] - StartPositions[i]) * t);
 		//bone->Rotation.setIdentity();
 		bone->setRotation(rots[0], rots[1], rots[2]);

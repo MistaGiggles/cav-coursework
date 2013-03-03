@@ -1,4 +1,4 @@
-input = open("anim_raw", 'r')
+input = open("run_raw", 'r')
 output = open("anim_turn", 'w')
 
 frames = {}
