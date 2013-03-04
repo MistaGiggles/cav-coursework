@@ -675,7 +675,7 @@ public:
 					w.addWeight(wi, i);
 				} else
 				{
-					std::cout<<"INPUT READ ERROR LINE: "<<linesread<<" POS: "<<i<<std::endl;
+					//std::cout<<"INPUT READ ERROR LINE: "<<linesread<<" POS: "<<i<<std::endl;
 				}
 				
 			}
