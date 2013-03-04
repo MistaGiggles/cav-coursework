@@ -422,17 +422,21 @@ public:
 			id = -99;
 			// Scans for StartTime EndTime Bone XRotation YRotation ZRotation EndXRot EndYRot EndZRot
 			sscanf(buf, "%f %f %i %f %f %f %f %f %f", &start, &end, &id, &xr, &yr, &zr, &nxr, &nyr, &nzr);
-			if(lastStart == start) {
-				// Same Frame
-				frames.back().add(id, xr, yr, zr, nxr, nyr, nzr);
+			if(id==-99)
+			{
+				std::cout<<"End of Animation file"<<std::endl;
 			} else {
-				Frame f;
-				f.setStartEnd(start, end);
-				f.add(id, xr, yr, zr, nxr, nyr, nzr);
-				frames.push_back(f);
-				//new Frame
+				if(lastStart == start) {
+					// Same Frame
+					frames.back().add(id, xr, yr, zr, nxr, nyr, nzr);
+				} else {
+					Frame f;
+					f.setStartEnd(start, end);
+					f.add(id, xr, yr, zr, nxr, nyr, nzr);
+					frames.push_back(f);
+					//new Frame
+				}
 			}
-			
 
 
 			lastStart = start;
