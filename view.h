@@ -522,16 +522,18 @@ public:
 						
 						
 						// Place first point at bones origin, use the rest pose to calculate global rest position
-						Vector3f a(0,0,0);
-						a = bones[i]->getRestPose() * a;
+						Vector3f ao(0,0,0);
+						ao= bones[i]->getRestPose() * ao;
 						// Place first point at bones parents origin, use the rest pose to calculate global rest position
-						Vector3f b(0,0,0);
-						b = bones[i]->Parent->getRestPose() * b;
+						Vector3f bo(0,0,0);
+						bo = bones[i]->Parent->getRestPose() * bo;
 						
 						// Apply transformation, startChain() returns new post matrix
-						a = (bones[i]->startChain() *  bones[i]->getRestPoseInv()) * a;
-						b = (bones[i]->Parent->startChain() * bones[i]->Parent->getRestPoseInv()) * b;
-
+						//a = (bones[i]->startChain() *  bones[i]->getRestPoseInv()) * a;
+						//b = (bones[i]->Parent->startChain() * bones[i]->Parent->getRestPoseInv()) * b;
+						
+						Vector3f a = (bones[i]->startChain() *  bones[i]->getRestPoseInv()) * ao;
+						Vector3f b = (bones[i]->Parent->startChain() *  bones[i]->Parent->getRestPoseInv()) * bo;
 						// draw
 						glNormal3f(0,0,1);
 						glVertex3f(a[0], a[1], a[2]);
