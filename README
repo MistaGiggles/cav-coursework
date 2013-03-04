@@ -1,0 +1,30 @@
+CAV Coursework Assignment 1
+
+Controls:
+F1: View Rigged Model
+F2: View Skeleton (Slow)
+
+Compilation:
+the comp.sh script is used to compile the program.
+
+Running
+./view <model> <skeleton> <weights>
+example:
+./view arma2.obj skeleton2.out attachment2.out
+
+OR
+
+run.sh can be used to run the progam.
+
+Animation file anim_turn is loaded automatically and executed.
+
+
+Issues:
+
+Animation moves the characters right hand, and for some reason the weights of some vertices in the hip are tied to the righ hand. This is a problem within the supplied weights file. This produces the weird hip bulge during the animation.
+
+
+Other animations can be generated, the file wave_raw contains frame information for animation and the animGen.py python script produces a format for the program to interpret.
+
+wave_raw format:
+by_time boneid rotX rotY rotZ boneid rotX rotY rotZ boneid rotX rotY rotZ boneid rotX rotY rotZ

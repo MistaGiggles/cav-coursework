@@ -359,7 +359,7 @@ class Frame {
 		
 		float t = (time-starttime)/(endtime-starttime);
 		int id = bone->id;
-		std::cout<<"START"<<std::endl;
+		//std::cout<<"START"<<std::endl;
 		//StartPositions[i].print();
 		//EndPositions[i].print();
 		Vector3f rots = (StartPositions[i] + (EndPositions[i] - StartPositions[i]) * t);
@@ -378,7 +378,7 @@ class Frame {
 		for(int i = 0; i < bones.size(); i++)
 		{
 			int id = bones[i];
-			std::cout<<"ANIM APPLY UPDATE BONE "<<id<<std::endl;
+			//std::cout<<"ANIM APPLY UPDATE BONE "<<id<<std::endl;
 			apply(time, Ss[id], i);
 		}
 		return false;
@@ -392,12 +392,12 @@ class Animation {
 public:
 	void update(float dt, std::vector<Bone*>& Ss)
 	{
-		std::cout<<"ANIM UPDATE FRAME "<<currentFrame<<std::endl;
+		//std::cout<<"ANIM UPDATE FRAME "<<currentFrame<<std::endl;
 		time += dt;
 		std::cout<<"TIME: "<<time<<std::endl;
 		bool frameComplete = frames[currentFrame].applyFrame(time, Ss);
 		if(frameComplete) {
-			std::cout<<"Frame "<<currentFrame<<" completed"<<std::endl;
+			//std::cout<<"Frame "<<currentFrame<<" completed"<<std::endl;
 			currentFrame++;
 			if(currentFrame > frames.size()) {
 				currentFrame = 0;
